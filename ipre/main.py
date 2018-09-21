@@ -2,6 +2,8 @@ from time import sleep
 from PyQt4 import QtGui
 from PyQt4.QtCore import QTimer
 from PyQt4.QtCore import QRect, QPropertyAnimation
+import  json
+import requests
 
 class Robot:
     def __init__(self,x,y,id,ventana):
@@ -159,6 +161,11 @@ class  MiMapa (QtGui.QWidget):
         self.boton_obstaculos.move(150, 80)
         self.boton_obstaculos.clicked.connect(self.boton_obstaculos_callback)
 
+        self.boton_poner_rob = QtGui.QPushButton('&poner robot', self)
+        self.boton_poner_rob.resize(self.boton_poner_rob.sizeHint())
+        self.boton_poner_rob.move(250, 50)
+        self.boton_poner_rob.clicked.connect(self.poner_rob_call)
+
         self.background2 = QtGui.QLabel(self)
         self.background2.resize(600, 600)
         self.background2.setPixmap(QtGui.QPixmap("fondo.png"))
@@ -197,18 +204,24 @@ class  MiMapa (QtGui.QWidget):
         self.contador="r"
         self.contador_final="r"
 
+
+
+    def poner_rob_call(self):
+        if len(self.robots)==0:
+            self.contador="r"
+        if len(self.robots_final)==0:
+            self.contador_final="r"
     def boton_pelota_callback(self):
         self.contador="p"
     def boton_obstaculos_callback(self):
-        if self.contador=="o":
-         self.contador="p"
-        else:
-            self.contador="o"
+         self.contador="o"
+         print("dfdf")
     def boton1_callback(self):
         # Este método maneja el evento sobre quien opera
         if len(self.balls)>0:
                 b=self.balls.pop()
                 b.pic.hide()
+                b.nombre.hide()
 
         if len(self.robots)>0:
             self.contador="p"
@@ -229,6 +242,7 @@ class  MiMapa (QtGui.QWidget):
         if len(self.balls_final)>0:
                 b=self.balls_final.pop()
                 b.pic.hide()
+                b.nombre.hide()
 
         if len(self.robots_final)>0:
             self.contador_final="p"
@@ -256,10 +270,15 @@ class  MiMapa (QtGui.QWidget):
         y= event.y()
         print("x:",x)
         print("y:",y)
-        if self.contador=="r" or self.contador_final=="r" :
+        print(self.contador)
+        if (self.contador=="r" and x<613)or (self.contador_final=="r" and x>613):
             self.robot(x,y)
+            print("sfsd")
         elif self.contador=="o":
+            print("obs")
             self.obstaculo(x,y)
+
+
         else:
             self.pelota(x,y)
     def robot(self,x,y):
@@ -446,6 +465,25 @@ class  MiMapa (QtGui.QWidget):
 
 
     def ejecutar_acciones(self):
+        self.generar()
+        ####################################
+        #### codigo para pddl nube #########
+        ####################################
+
+        data1 = {'domain': open("main_domain.pddl", 'r').read(),
+        'problem': open("temporal.pddl", 'r').read()}
+        r = requests.post('http://solver.planning.domains/solve', data=data1, allow_redirects=True)
+        s=r.content.decode("utf-8")
+        s=json.loads(s)
+        print(s["result"]["plan"])
+        file = open("resultado.txt","w")
+        for instruccion in s["result"]["plan"]:
+            print(instruccion["name"])
+            file.write(instruccion["name"]+"\n")
+        file.close()
+
+
+        ###############################fin
         dic={"move":self.move}
         with open('resultado.txt','r') as f:
             instrucciones=f.readlines()
