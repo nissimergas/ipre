@@ -6,7 +6,7 @@
 (:action move :parameters (?x ?y ?x2 ?y2)
 :precondition (and (coord_x ?x) (coord_x ?x2) (coord_y ?y) (coord_y ?y2) (not (at-obstaculo ?x2 ?y2) )
 (next ?x ?x2) (next ?y ?y2)
-(at-robby ?x  ?y))
+(at-robby ?x  ?y) (or (= ?x ?x2) (= ?y ?y2)))
 :effect (and (at-robby ?x2 ?y2)
 (not (at-robby ?x ?y) )) )
 

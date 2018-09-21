@@ -4,6 +4,7 @@ from PyQt4.QtCore import QTimer
 from PyQt4.QtCore import QRect, QPropertyAnimation
 import  json
 import requests
+import subprocess
 
 class Robot:
     def __init__(self,x,y,id,ventana):
@@ -186,11 +187,15 @@ class  MiMapa (QtGui.QWidget):
 
 
 
-        self.boton_ejecutar = QtGui.QPushButton('&ejecutar', self)
+        self.boton_ejecutar = QtGui.QPushButton('&ejecutar api', self)
         self.boton_ejecutar.resize(self.boton_ejecutar.sizeHint())
         self.boton_ejecutar.move(650, 80)
         self.boton_ejecutar.clicked.connect(self.ejecutar_acciones)
 
+        self.boton_ejecutar2 = QtGui.QPushButton('&ejecutar local', self)
+        self.boton_ejecutar2.resize(self.boton_ejecutar.sizeHint())
+        self.boton_ejecutar2.move(650, 110)
+        self.boton_ejecutar2.clicked.connect(self.ejecutar_acciones2)
 
         self.contador_rob=0
         self.contador_ball=0
@@ -463,6 +468,65 @@ class  MiMapa (QtGui.QWidget):
 
 
 
+    def ejecutar_acciones2(self):
+        self.generar()
+        ####################################
+        #### codigo para pddl local #########
+        ####################################
+        result = subprocess.run(["ff/./ff","-p","/Users/nissimergas/Desktop/ipre/","-o","main_domain.pddl","-f","temporal.pddl"]
+                        , stdout=subprocess.PIPE)
+        print(type(str(result.stdout)))
+        output=str(result.stdout)
+        inicio=output.find("step" )
+        fin=output.find("ntime" )
+        #print(output[inicio:fin])
+        file = open("resultado_terminal.txt","w")
+        lineas=output[inicio:fin].strip("step").split("n")
+        for li in lineas:
+            print(li)
+            l=li.strip('\ ')
+            f=l.find(" ")
+            if len(l[f:].lower().strip(" "))>2:
+                file.write("("+l[f:].lower().strip(" ")+")"+"\n")
+        file.close()
+        ######crear resultados
+
+
+
+
+        ###############################fin
+        dic={"move":self.move}
+        with open('resultado_terminal.txt','r') as f:
+            instrucciones=f.readlines()
+        for instruccion in instrucciones:
+            parametros=instruccion.strip("(").strip(")").split()
+            nombre_instr=parametros[0]
+           # for parametro in parametros:
+               # print(parametro)
+            if nombre_instr=="move":
+                x2r=parametros[3]
+                y2r=parametros[4].strip(")")
+                x2real=int(x2r[1:])*37+22+18.5
+                y2real=int(y2r[1:])*33+141+18.5
+                self.instrucciones.append((nombre_instr,parametros[1],parametros[2],x2real,y2real))
+            elif nombre_instr=="pick-up":
+                print("hola")
+                self.instrucciones.append((nombre_instr,parametros[1],parametros[2],parametros[3],parametros[4].strip(")")))
+            elif nombre_instr=="drop":
+                x2r=parametros[2]
+                y2r=parametros[3].strip(")")
+                x2real=int(x2r[1:])*37+22+18.5
+                y2real=int(y2r[1:])*33+141+18.5
+
+                self.instrucciones.append((nombre_instr,parametros[1],x2real,y2real,parametros[4].strip(")")))
+            #dic[nombre_instr](parametros[1],parametros[2],parametros[3],parametros[4].strip(")"))
+             #dic[nombre_instr]()
+
+        self._timer = QTimer(interval=1,
+                                    timeout=self.funcion_instrucciones)
+        self._timer.start(500)
+
+
 
     def ejecutar_acciones(self):
         self.generar()
@@ -472,6 +536,7 @@ class  MiMapa (QtGui.QWidget):
 
         data1 = {'domain': open("main_domain.pddl", 'r').read(),
         'problem': open("temporal.pddl", 'r').read()}
+
         r = requests.post('http://solver.planning.domains/solve', data=data1, allow_redirects=True)
         s=r.content.decode("utf-8")
         s=json.loads(s)
