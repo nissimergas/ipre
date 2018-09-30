@@ -5,6 +5,8 @@ from PyQt4.QtCore import QRect, QPropertyAnimation
 import  json
 import requests
 import subprocess
+import os
+
 
 class Robot:
     def __init__(self,x,y,id,ventana):
@@ -130,7 +132,11 @@ class  MiMapa (QtGui.QWidget):
 
         self.text1 = QtGui.QLabel(self)
         self.text1.setText("condiciones iniciales")
+
         self.text1.move(200,110)
+        self.instruccion_ejecutada=QtGui.QLabel(self)
+        self.instruccion_ejecutada.setText("                                       ")
+        self.instruccion_ejecutada.move(200,128)
 
         self.boton1 = QtGui.QPushButton('&delete pelotas', self)
         self.boton1.resize(self.boton1.sizeHint())
@@ -164,7 +170,7 @@ class  MiMapa (QtGui.QWidget):
 
         self.boton_poner_rob = QtGui.QPushButton('&poner robot', self)
         self.boton_poner_rob.resize(self.boton_poner_rob.sizeHint())
-        self.boton_poner_rob.move(250, 50)
+        self.boton_poner_rob.move(300, 20)
         self.boton_poner_rob.clicked.connect(self.poner_rob_call)
 
         self.background2 = QtGui.QLabel(self)
@@ -196,6 +202,13 @@ class  MiMapa (QtGui.QWidget):
         self.boton_ejecutar2.resize(self.boton_ejecutar.sizeHint())
         self.boton_ejecutar2.move(650, 110)
         self.boton_ejecutar2.clicked.connect(self.ejecutar_acciones2)
+
+        self.boton_estado0 = QtGui.QPushButton('&estado inical', self)
+        self.boton_estado0.resize(self.boton_estado0.sizeHint())
+        self.boton_estado0.move(790, 20)
+        self.boton_estado0.clicked.connect(self.volver_estado)
+
+
 
         self.contador_rob=0
         self.contador_ball=0
@@ -424,6 +437,9 @@ class  MiMapa (QtGui.QWidget):
     def funcion_instrucciones(self):
         if len(self.instrucciones)>self.program_counter:
             if self.instrucciones[self.program_counter][0]=="move":
+                if len(self.instr)>self.program_counter:
+                    self.instruccion_ejecutada.setText(self.instr[self.program_counter])
+
                 x2real =self.instrucciones[self.program_counter][3]
                 y2real=self.instrucciones[self.program_counter][4]
                 self.robots[0].move(x2real,y2real)
@@ -432,6 +448,8 @@ class  MiMapa (QtGui.QWidget):
                 #self.robots[0].pic.show()
                 self.program_counter+=1
             elif self.instrucciones[self.program_counter][0]=="pick-up":
+                if len(self.instr)>self.program_counter:
+                    self.instruccion_ejecutada.setText(self.instr[self.program_counter])
                 pelota=None
                 for ball in self.balls:
                     print("comparacion  ",ball.id, self.instrucciones[self.program_counter][1] )
@@ -445,6 +463,8 @@ class  MiMapa (QtGui.QWidget):
                 self.program_counter+=1
 
             elif self.instrucciones[self.program_counter][0]=="drop":
+                if len(self.instr)>self.program_counter:
+                    self.instruccion_ejecutada.setText(self.instr[self.program_counter])
                 x2real =self.instrucciones[self.program_counter][2]
                 y2real=self.instrucciones[self.program_counter][3]
 
@@ -461,19 +481,25 @@ class  MiMapa (QtGui.QWidget):
                 pelota.nombre.move(x2real,y2real)
                 self.program_counter+=1
 
-
-
-
-
-
+        else:
+            self._timer.stop()
 
 
     def ejecutar_acciones2(self):
+        self.instrucciones=[]
+        self.program_counter=0
+        self.estado_inicial_pelotas=[]
+        for pelota in self.balls:
+            self.estado_inicial_pelotas.append([pelota.pic.x(), pelota.pic.y(),pelota.nombre.x(),pelota.nombre.y()])
+        self.estado_inicial_robot=[self.robots[0].pic.x(),self.robots[0].pic.y()]
         self.generar()
         ####################################
         #### codigo para pddl local #########
         ####################################
-        result = subprocess.run(["ff/./ff","-p","/Users/nissimergas/Desktop/ipre/","-o","main_domain.pddl","-f","temporal.pddl"]
+        directorio=os.getcwd()+"/"
+        print(directorio)
+        #result = subprocess.run(["ff/./ff","-p","/Users/nissimergas/Desktop/ipre/","-o","main_domain.pddl","-f","temporal.pddl"]
+        result = subprocess.run(["ff/./ff","-p",directorio,"-o","main_domain.pddl","-f","temporal.pddl"]
                         , stdout=subprocess.PIPE)
         print(type(str(result.stdout)))
         output=str(result.stdout)
@@ -498,6 +524,7 @@ class  MiMapa (QtGui.QWidget):
         dic={"move":self.move}
         with open('resultado_terminal.txt','r') as f:
             instrucciones=f.readlines()
+            self.instr=instrucciones
         for instruccion in instrucciones:
             parametros=instruccion.strip("(").strip(")").split()
             nombre_instr=parametros[0]
@@ -529,6 +556,12 @@ class  MiMapa (QtGui.QWidget):
 
 
     def ejecutar_acciones(self):
+        self.program_counter=0
+        self.instrucciones=[]
+        self.estado_inicial_pelotas=[]
+        for pelota in self.balls:
+            self.estado_inicial_pelotas.append([pelota.pic.x(), pelota.pic.y(),pelota.nombre.x(),pelota.nombre.y()])
+        self.estado_inicial_robot=[self.robots[0].pic.x(),self.robots[0].pic.y()]
         self.generar()
         ####################################
         #### codigo para pddl nube #########
@@ -552,6 +585,7 @@ class  MiMapa (QtGui.QWidget):
         dic={"move":self.move}
         with open('resultado.txt','r') as f:
             instrucciones=f.readlines()
+            self.instr=instrucciones
         for instruccion in instrucciones:
             parametros=instruccion.strip("(").strip(")").split()
             nombre_instr=parametros[0]
@@ -579,6 +613,15 @@ class  MiMapa (QtGui.QWidget):
         self._timer = QTimer(interval=1,
                                     timeout=self.funcion_instrucciones)
         self._timer.start(500)
+
+    def volver_estado(self):
+        self.robots[0].pic.move(self.estado_inicial_robot[0],self.estado_inicial_robot[1])
+        i=0
+        inicial=self.estado_inicial_pelotas
+        for  pelota in self.balls:
+            pelota.pic.move(inicial[i][0],inicial[i][1])
+            pelota.nombre.move(inicial[i][2],inicial[i][3])
+            i+=1
 
 
 if __name__ == '__main__':
