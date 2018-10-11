@@ -8,6 +8,7 @@ import subprocess
 import os
 
 
+
 class Robot:
     def __init__(self,x,y,id,ventana):
         self.x=((x-22)//37)
@@ -17,7 +18,7 @@ class Robot:
         self.id=id
         self.pic = QtGui.QLabel(ventana)
         #self.pic.resize(70, 70)
-        self.pic.setPixmap(QtGui.QPixmap("robot.png").scaledToWidth(50))
+        self.pic.setPixmap(QtGui.QPixmap("imagenes/robot.png").scaledToWidth(50))
         self.pic.show() # You were missing this.
         self.pic.move(x-26,y-30)
         self.left=Ball2()
@@ -70,7 +71,7 @@ class Ball:
         self.id="ball"+str(id)
         self.pic = QtGui.QLabel(ventana)
 
-        self.pic.setPixmap(QtGui.QPixmap("pelota.png").scaledToWidth(40))
+        self.pic.setPixmap(QtGui.QPixmap("imagenes/pelota.png").scaledToWidth(40))
 
 
         self.pic.show() # You were missing this.
@@ -93,13 +94,13 @@ class Obstaculo:
         self.id="obstaculo"+str(id)
         self.pic = QtGui.QLabel(ventana)
 
-        self.pic.setPixmap(QtGui.QPixmap("obstaculo.png"))
+        self.pic.setPixmap(QtGui.QPixmap("imagenes/obstaculo.png"))
         self.pic.show() # You were missing this.
         self.pic.move(x-18.5,y-16.5)
 
         self.pic2 = QtGui.QLabel(ventana)
 
-        self.pic2.setPixmap(QtGui.QPixmap("obstaculo.png"))
+        self.pic2.setPixmap(QtGui.QPixmap("imagenes/obstaculo.png"))
         self.pic2.show() # You were missing this.
         self.pic2.move(x-18.5+630,y-16.5)
 
@@ -120,7 +121,7 @@ class  MiMapa (QtGui.QWidget):
         self.timer = QTimer(self)
         self.cont_obstaculos=0
         self.background = QtGui.QLabel(self)
-        self.background.setPixmap(QtGui.QPixmap("fondo.png"))
+        self.background.setPixmap(QtGui.QPixmap("imagenes/fondo.png"))
         self.background.resize(600, 600)
         self.background.move(20,110)
         self.instrucciones=[]
@@ -131,82 +132,84 @@ class  MiMapa (QtGui.QWidget):
         #self.obstaculo.move(21,147)
 
         self.text1 = QtGui.QLabel(self)
-        self.text1.setText("condiciones iniciales")
+        self.text1.setText("Initial State")
 
         self.text1.move(200,110)
         self.instruccion_ejecutada=QtGui.QLabel(self)
         self.instruccion_ejecutada.setText("                                       ")
         self.instruccion_ejecutada.move(200,128)
 
-        self.boton1 = QtGui.QPushButton('&delete pelotas', self)
-        self.boton1.resize(self.boton1.sizeHint())
+        self.boton_estado0 = QtGui.QPushButton('&Back to initial state', self)
+        self.boton_estado0.resize(self.boton_estado0.sizeHint())
+        self.boton_estado0.move(450, 20)
+        self.boton_estado0.clicked.connect(self.volver_estado)
+
+        self.boton1 = QtGui.QPushButton('&Delete Ball', self)
+        self.boton1.resize(self.boton_estado0.sizeHint())
         self.boton1.move(10, 20)
         self.boton1.clicked.connect(self.boton1_callback)
 
-        self.boton_bor_ob = QtGui.QPushButton('&delete obstaculo', self)
-        self.boton_bor_ob.resize(self.boton_bor_ob.sizeHint())
+        self.boton_bor_ob = QtGui.QPushButton('&Delete Obstacle', self)
+        self.boton_bor_ob.resize(self.boton_estado0.sizeHint())
         self.boton_bor_ob.move(150, 20)
         self.boton_bor_ob.clicked.connect(self.boton_bor_ob_callback)
 
-        self.boton2 = QtGui.QPushButton('&delete robot', self)
-        self.boton2.resize(self.boton1.sizeHint())
+        self.boton2 = QtGui.QPushButton('&Delete Robot', self)
+        self.boton2.resize(self.boton_estado0.sizeHint())
         self.boton2.move(10, 50)
         self.boton2.clicked.connect(self.boton2_callback)
 
-        self.boton_pelota = QtGui.QPushButton('&pelota', self)
-        self.boton_pelota.resize(self.boton_pelota.sizeHint())
+        self.boton_pelota = QtGui.QPushButton('&Place Ball', self)
+        self.boton_pelota.resize(self.boton_estado0.sizeHint())
         self.boton_pelota.move(150, 50)
         self.boton_pelota.clicked.connect(self.boton_pelota_callback)
 
-        self.boton3 = QtGui.QPushButton('&codigo', self)
-        self.boton3.resize(self.boton1.sizeHint())
+        self.boton3 = QtGui.QPushButton('&Generate Pddl Code', self)
+        self.boton3.resize(self.boton_estado0.sizeHint())
         self.boton3.move(10, 80)
         self.boton3.clicked.connect(self.boton3_callback)
 
-        self.boton_obstaculos = QtGui.QPushButton('&obstaculos', self)
-        self.boton_obstaculos.resize(self.boton_obstaculos.sizeHint())
+        self.boton_obstaculos = QtGui.QPushButton('&Place Obstacle', self)
+        self.boton_obstaculos.resize(self.boton_estado0.sizeHint())
         self.boton_obstaculos.move(150, 80)
         self.boton_obstaculos.clicked.connect(self.boton_obstaculos_callback)
 
-        self.boton_poner_rob = QtGui.QPushButton('&poner robot', self)
-        self.boton_poner_rob.resize(self.boton_poner_rob.sizeHint())
+        self.boton_poner_rob = QtGui.QPushButton('&Place Robot', self)
+        self.boton_poner_rob.resize(self.boton_estado0.sizeHint())
         self.boton_poner_rob.move(300, 20)
         self.boton_poner_rob.clicked.connect(self.poner_rob_call)
 
         self.background2 = QtGui.QLabel(self)
         self.background2.resize(600, 600)
-        self.background2.setPixmap(QtGui.QPixmap("fondo.png"))
+        self.background2.setPixmap(QtGui.QPixmap("imagenes/fondo.png"))
         self.background2.move(650,110)
         self.text2 = QtGui.QLabel(self)
-        self.text2.setText("condiciones finales")
+        self.text2.setText("Final State")
         self.text2.move(870,110)
 
-        self.boton4 = QtGui.QPushButton('&delete pelotas', self)
-        self.boton4.resize(self.boton4.sizeHint())
+        self.boton4 = QtGui.QPushButton('&Delete Ball', self)
+        self.boton4.resize(self.boton_estado0.sizeHint())
         self.boton4.move(650, 20)
         self.boton4.clicked.connect(self.boton4_callback)
 
-        self.boton5 = QtGui.QPushButton('&delete robot', self)
-        self.boton5.resize(self.boton5.sizeHint())
+        self.boton5 = QtGui.QPushButton('&Delete Robot', self)
+        self.boton5.resize(self.boton_estado0.sizeHint())
         self.boton5.move(650, 50)
         self.boton5.clicked.connect(self.boton5_callback)
 
 
 
-        self.boton_ejecutar = QtGui.QPushButton('&ejecutar api', self)
-        self.boton_ejecutar.resize(self.boton_ejecutar.sizeHint())
-        self.boton_ejecutar.move(650, 80)
+        self.boton_ejecutar = QtGui.QPushButton('&Execute api', self)
+        self.boton_ejecutar.resize(self.boton_estado0.sizeHint())
+        self.boton_ejecutar.move(300, 50)
         self.boton_ejecutar.clicked.connect(self.ejecutar_acciones)
 
-        self.boton_ejecutar2 = QtGui.QPushButton('&ejecutar local', self)
-        self.boton_ejecutar2.resize(self.boton_ejecutar.sizeHint())
-        self.boton_ejecutar2.move(650, 110)
+        self.boton_ejecutar2 = QtGui.QPushButton('&Execute local', self)
+        self.boton_ejecutar2.resize(self.boton_estado0.sizeHint())
+        self.boton_ejecutar2.move(300, 80)
         self.boton_ejecutar2.clicked.connect(self.ejecutar_acciones2)
 
-        self.boton_estado0 = QtGui.QPushButton('&estado inical', self)
-        self.boton_estado0.resize(self.boton_estado0.sizeHint())
-        self.boton_estado0.move(790, 20)
-        self.boton_estado0.clicked.connect(self.volver_estado)
+
 
 
 
@@ -421,9 +424,9 @@ class  MiMapa (QtGui.QWidget):
 
 
         self.robots[0].pic.hide()
-        self.robots[0].pic.setPixmap(QtGui.QPixmap("robot.png").scaledToWidth(50))
+        self.robots[0].pic.setPixmap(QtGui.QPixmap("imagenes/robot.png").scaledToWidth(50))
         self.robots[0].pic.resize(70, 70)
-        self.robots[0].pic.setPixmap(QtGui.QPixmap("robot.png").scaledToWidth(50))
+        self.robots[0].pic.setPixmap(QtGui.QPixmap("imagenes/robot.png").scaledToWidth(50))
         #self.robots[0].pic.move(self.x2real, self.y2real)
         x2r=self.instrucciones[self.program_counter][2]
         y2r=self.instrucciones[self.program_counter][3]
@@ -497,9 +500,13 @@ class  MiMapa (QtGui.QWidget):
         #### codigo para pddl local #########
         ####################################
         directorio=os.getcwd()+"/"
-        print(directorio)
+        conf_file=open("configuration.txt","r")
+        lineas = conf_file.readlines()
+        ubicacion_ff=lineas[0].strip()
+        conf_file.close()
+        print(ubicacion_ff)
         #result = subprocess.run(["ff/./ff","-p","/Users/nissimergas/Desktop/ipre/","-o","main_domain.pddl","-f","temporal.pddl"]
-        result = subprocess.run(["ff/./ff","-p",directorio,"-o","main_domain.pddl","-f","temporal.pddl"]
+        result = subprocess.run([ubicacion_ff,"-p",directorio,"-o","main_domain.pddl","-f","temporal.pddl"]
                         , stdout=subprocess.PIPE)
         print(type(str(result.stdout)))
         output=str(result.stdout)
